@@ -1,0 +1,15 @@
+OBSERVACAO:
+
+O DDL atual foi feito pelo chatGPT ao analisar o pdf do enunciado.
+Segundo ele, essas foram as decisões e as respotas para cada uma das 6 questões:
+
+"Decisões adotadas
+
+Para o DDL ficar consistente:
+
+1 - Responsáveis pelo evento: podem ser pessoas ou organizações. Um evento pode ter vários responsáveis.
+2 - Papéis: uma pessoa é única, e seus papéis são registrados separadamente por evento e por atividade.
+3 - Atividade × sessão: uma atividade pode possuir várias sessões; cada sessão possui data/hora e espaço próprios.
+4 - Edições: cada edição é um evento independente. Assim, "Semana da Computação 2026" e "Semana da Computação 2027" são eventos diferentes.
+5 - Vagas: inscrição no evento é geral; determinadas sessões podem exigir inscrição adicional e possuir limite próprio.
+6 - Alteração de programação: armazenamos apenas a programação atual. Histórico de alterações não será mantido. "
