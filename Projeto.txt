@@ -22,7 +22,388 @@ Cada resposta Q1-Q6 deverá ocupar uma única linha.
 ============================================================
 3. DDL COMPLETO
 ============================================================
-[Inserir aqui todo o DDL necessário para criação do banco.]
+-- ============================================================
+-- 2. PESSOAS
+-- ============================================================
+
+CREATE TABLE pessoa (
+    id_pessoa BIGINT GENERATED ALWAYS AS IDENTITY,
+    nome VARCHAR(150) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    telefone VARCHAR(30),
+
+    CONSTRAINT pk_pessoa
+        PRIMARY KEY (id_pessoa),
+
+    CONSTRAINT uq_pessoa_email
+        UNIQUE (email)
+);
+
+
+-- ============================================================
+-- 3. ORGANIZAÇÕES
+-- ============================================================
+
+CREATE TABLE organizacao (
+    id_organizacao BIGINT GENERATED ALWAYS AS IDENTITY,
+    nome VARCHAR(200) NOT NULL,
+    email VARCHAR(255),
+    telefone VARCHAR(30),
+
+    CONSTRAINT pk_organizacao
+        PRIMARY KEY (id_organizacao),
+
+    CONSTRAINT uq_organizacao_nome
+        UNIQUE (nome)
+);
+
+
+-- ============================================================
+-- 4. EVENTOS
+-- ============================================================
+
+CREATE TABLE evento (
+    id_evento BIGINT GENERATED ALWAYS AS IDENTITY,
+    nome VARCHAR(200) NOT NULL,
+    descricao TEXT,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+
+    status status_evento NOT NULL
+        DEFAULT 'PLANEJADO',
+
+    CONSTRAINT pk_evento
+        PRIMARY KEY (id_evento),
+
+    CONSTRAINT ck_evento_datas
+        CHECK (data_fim >= data_inicio),
+
+    CONSTRAINT uq_evento_nome_inicio
+        UNIQUE (nome, data_inicio)
+);
+
+
+-- ============================================================
+-- 5. RESPONSÁVEIS PELA PROMOÇÃO DO EVENTO
+-- ============================================================
+
+CREATE TABLE evento_pessoa_responsavel (
+    id_evento BIGINT NOT NULL,
+    id_pessoa BIGINT NOT NULL,
+
+    CONSTRAINT pk_evento_pessoa_responsavel
+        PRIMARY KEY (id_evento, id_pessoa),
+
+    CONSTRAINT fk_epr_evento
+        FOREIGN KEY (id_evento)
+        REFERENCES evento(id_evento)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_epr_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+CREATE TABLE evento_organizacao_responsavel (
+    id_evento BIGINT NOT NULL,
+    id_organizacao BIGINT NOT NULL,
+
+    CONSTRAINT pk_evento_organizacao_responsavel
+        PRIMARY KEY (id_evento, id_organizacao),
+
+    CONSTRAINT fk_eor_evento
+        FOREIGN KEY (id_evento)
+        REFERENCES evento(id_evento)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_eor_organizacao
+        FOREIGN KEY (id_organizacao)
+        REFERENCES organizacao(id_organizacao)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- 6. ESPAÇOS
+-- ============================================================
+
+CREATE TABLE espaco (
+    id_espaco BIGINT GENERATED ALWAYS AS IDENTITY,
+    nome VARCHAR(150) NOT NULL,
+    localizacao VARCHAR(255),
+    capacidade INTEGER NOT NULL,
+
+    CONSTRAINT pk_espaco
+        PRIMARY KEY (id_espaco),
+
+    CONSTRAINT uq_espaco_nome
+        UNIQUE (nome),
+
+    CONSTRAINT ck_espaco_capacidade
+        CHECK (capacidade > 0)
+);
+
+
+-- ============================================================
+-- 7. RECURSOS DISPONÍVEIS
+-- ============================================================
+
+CREATE TABLE recurso (
+    id_recurso BIGINT GENERATED ALWAYS AS IDENTITY,
+    nome VARCHAR(100) NOT NULL,
+    descricao TEXT,
+
+    CONSTRAINT pk_recurso
+        PRIMARY KEY (id_recurso),
+
+    CONSTRAINT uq_recurso_nome
+        UNIQUE (nome)
+);
+
+
+-- ============================================================
+-- 8. RECURSOS DISPONÍVEIS EM CADA ESPAÇO
+-- ============================================================
+
+CREATE TABLE espaco_recurso (
+    id_espaco BIGINT NOT NULL,
+    id_recurso BIGINT NOT NULL,
+    quantidade INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT pk_espaco_recurso
+        PRIMARY KEY (id_espaco, id_recurso),
+
+    CONSTRAINT fk_er_espaco
+        FOREIGN KEY (id_espaco)
+        REFERENCES espaco(id_espaco)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_er_recurso
+        FOREIGN KEY (id_recurso)
+        REFERENCES recurso(id_recurso)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT ck_er_quantidade
+        CHECK (quantidade > 0)
+);
+
+
+-- ============================================================
+-- 9. ATIVIDADES
+-- ============================================================
+
+CREATE TABLE atividade (
+    id_atividade BIGINT GENERATED ALWAYS AS IDENTITY,
+    id_evento BIGINT NOT NULL,
+
+    titulo VARCHAR(200) NOT NULL,
+    descricao TEXT,
+
+    CONSTRAINT pk_atividade
+        PRIMARY KEY (id_atividade),
+
+    CONSTRAINT fk_atividade_evento
+        FOREIGN KEY (id_evento)
+        REFERENCES evento(id_evento)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT uq_atividade_evento_titulo
+        UNIQUE (id_evento, titulo)
+);
+
+
+-- ============================================================
+-- 10. RECURSOS NECESSÁRIOS PARA ATIVIDADES
+-- ============================================================
+
+CREATE TABLE atividade_recurso (
+    id_atividade BIGINT NOT NULL,
+    id_recurso BIGINT NOT NULL,
+    quantidade INTEGER NOT NULL DEFAULT 1,
+
+    CONSTRAINT pk_atividade_recurso
+        PRIMARY KEY (id_atividade, id_recurso),
+
+    CONSTRAINT fk_ar_atividade
+        FOREIGN KEY (id_atividade)
+        REFERENCES atividade(id_atividade)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_ar_recurso
+        FOREIGN KEY (id_recurso)
+        REFERENCES recurso(id_recurso)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT ck_ar_quantidade
+        CHECK (quantidade > 0)
+);
+
+
+-- ============================================================
+-- 11. PAPÉIS DAS PESSOAS NO EVENTO
+-- ============================================================
+
+CREATE TABLE evento_pessoa (
+    id_evento BIGINT NOT NULL,
+    id_pessoa BIGINT NOT NULL,
+    papel papel_evento NOT NULL,
+
+    CONSTRAINT pk_evento_pessoa
+        PRIMARY KEY (id_evento, id_pessoa, papel),
+
+    CONSTRAINT fk_ep_evento
+        FOREIGN KEY (id_evento)
+        REFERENCES evento(id_evento)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_ep_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- 12. PAPÉIS DAS PESSOAS NAS ATIVIDADES
+-- ============================================================
+
+CREATE TABLE atividade_pessoa (
+    id_atividade BIGINT NOT NULL,
+    id_pessoa BIGINT NOT NULL,
+    papel papel_atividade NOT NULL,
+
+    CONSTRAINT pk_atividade_pessoa
+        PRIMARY KEY (id_atividade, id_pessoa, papel),
+
+    CONSTRAINT fk_ap_atividade
+        FOREIGN KEY (id_atividade)
+        REFERENCES atividade(id_atividade)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_ap_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- 13. SESSÕES
+-- ============================================================
+
+CREATE TABLE sessao (
+    id_sessao BIGINT GENERATED ALWAYS AS IDENTITY,
+    id_atividade BIGINT NOT NULL,
+    id_espaco BIGINT NOT NULL,
+
+    data_inicio TIMESTAMP NOT NULL,
+    data_fim TIMESTAMP NOT NULL,
+
+    requer_inscricao BOOLEAN NOT NULL DEFAULT FALSE,
+
+    limite_vagas INTEGER,
+
+    CONSTRAINT pk_sessao
+        PRIMARY KEY (id_sessao),
+
+    CONSTRAINT fk_sessao_atividade
+        FOREIGN KEY (id_atividade)
+        REFERENCES atividade(id_atividade)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_sessao_espaco
+        FOREIGN KEY (id_espaco)
+        REFERENCES espaco(id_espaco)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+
+    CONSTRAINT ck_sessao_horario
+        CHECK (data_fim > data_inicio),
+
+    CONSTRAINT ck_sessao_limite_vagas
+        CHECK (limite_vagas IS NULL OR limite_vagas > 0),
+
+    CONSTRAINT uq_sessao_atividade_inicio
+        UNIQUE (id_atividade, data_inicio)
+);
+
+
+-- ============================================================
+-- 14. INSCRIÇÕES NOS EVENTOS
+-- ============================================================
+
+CREATE TABLE inscricao_evento (
+    id_evento BIGINT NOT NULL,
+    id_pessoa BIGINT NOT NULL,
+
+    data_inscricao TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    status status_inscricao NOT NULL
+        DEFAULT 'CONFIRMADA',
+
+    CONSTRAINT pk_inscricao_evento
+        PRIMARY KEY (id_evento, id_pessoa),
+
+    CONSTRAINT fk_ie_evento
+        FOREIGN KEY (id_evento)
+        REFERENCES evento(id_evento)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_ie_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
+
+
+-- ============================================================
+-- 15. INSCRIÇÕES ESPECÍFICAS EM SESSÕES
+-- ============================================================
+
+CREATE TABLE inscricao_sessao (
+    id_sessao BIGINT NOT NULL,
+    id_pessoa BIGINT NOT NULL,
+
+    data_inscricao TIMESTAMP NOT NULL
+        DEFAULT CURRENT_TIMESTAMP,
+
+    status status_inscricao NOT NULL
+        DEFAULT 'CONFIRMADA',
+
+    CONSTRAINT pk_inscricao_sessao
+        PRIMARY KEY (id_sessao, id_pessoa),
+
+    CONSTRAINT fk_is_sessao
+        FOREIGN KEY (id_sessao)
+        REFERENCES sessao(id_sessao)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    CONSTRAINT fk_is_pessoa
+        FOREIGN KEY (id_pessoa)
+        REFERENCES pessoa(id_pessoa)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
 ============================================================
 4. CONSULTAS
 ============================================================

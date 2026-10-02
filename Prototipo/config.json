@@ -2,12 +2,12 @@
   "database": {
     "host": "localhost",
     "port": 5432,
-    "dbname": "eventos",
+    "dbname": "trabalho_bd",
     "user": "postgres",
-    "password": "postgres"
+    "password": "admin"
   },
   "ollama": {
     "host": "http://localhost:11434",
-    "model": "qwen3:8b"
+    "model": "qwen2.5-coder:latest"
   }
 }
