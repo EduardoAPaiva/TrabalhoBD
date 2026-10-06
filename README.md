@@ -13,7 +13,7 @@ O projeto foi desenvolvido de acordo com os requisitos definidos no enunciado da
 | Caio Cesar Trentin de Assis    | 15674233   |[@EduardoAPaiva](https://github.com/EduardoAPaiva)  |
 | Eduardo Alves Paiva            | 15448481   |[@CaioCesar](https://github.com/CaioCesarTA)        |
 | João Pedro Biazus Fagá         | 15483280   |[@JoaoPedroFaga](https://github.com/JoaoPedroFaga)  |
-| Mariana do Nascimento Ferreira | 15582241   |[@MarianaFerreir](https://github.com/MariNFerreira) |
+| Mariana do Nascimento Ferreira | 15582241   |[@MarianaFerreira](https://github.com/MariNFerreira) |
 
 ## 🎯 Objetivos
 
