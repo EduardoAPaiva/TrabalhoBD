@@ -10,10 +10,10 @@ O projeto foi desenvolvido de acordo com os requisitos definidos no enunciado da
 
 | Integrante                     | Número USP | GitHub                                             |
 | ------------------------------ | ---------- | -------------------------------------------------- |
-| Caio Cesar Trentin de Assis    | 15674233   |[@EduardoAPaiva](https://github.com/EduardoAPaiva)  |
-| Eduardo Alves Paiva            | 15448481   |[@CaioCesar](https://github.com/CaioCesarTA)        |
+| Caio Cesar Trentin de Assis    | 15674233   |[@CaioCesarAssis](https://github.com/CaioCesarTA)   |
+| Eduardo Alves Paiva            | 15448481   |[@EduardoAPaiva](https://github.com/EduardoAPaiva)  |
 | João Pedro Biazus Fagá         | 15483280   |[@JoaoPedroFaga](https://github.com/JoaoPedroFaga)  |
-| Mariana do Nascimento Ferreira | 15582241   |[@MarianaFerreira](https://github.com/MariNFerreira) |
+| Mariana do Nascimento Ferreira | 15582241   |[@MarianaFerreira](https://github.com/MariNFerreira)|
 
 ## 🎯 Objetivos
 
