@@ -3,8 +3,12 @@ SCC0640 - PROJETO DE BASES DE DADOS
 ============================================================
 GRUPO:
 INTEGRANTES:
-LINGUAGEM UTILIZADA:
-MODELO UTILIZADO NO OLLAMA:
+Caio Cesar Trentin de Assis-15674233
+Eduardo Alves Paiva-15448481
+João Pedro Biazus Fagá-15483280
+Mariana do Nascimento Ferreira-15582241
+LINGUAGEM UTILIZADA:Python e PostgreSQL
+MODELO UTILIZADO NO OLLAMA:"qwen2.5-coder:latest"
 ============================================================
 1. DESCRICAO FINAL DO SISTEMA
 ============================================================
@@ -12,16 +16,47 @@ MODELO UTILIZADO NO OLLAMA:
 ============================================================
 2. DECISOES DE PROJETO
 ============================================================
-Q1: [resposta]
-Q2: [resposta]
-Q3: [resposta]
-Q4: [resposta]
-Q5: [resposta]
-Q6: [resposta]
+Q1: Responsáveis pelo evento: podem ser pessoas ou organizações. Um evento pode ter vários responsáveis.
+Q2: Papéis: uma pessoa é única, e seus papéis são registrados separadamente por evento e por atividade.
+Q3: Atividade × sessão: uma atividade pode possuir várias sessões; cada sessão possui data/hora e espaço próprios.
+Q4: Edições: cada edição é um evento independente. Assim, "Semana da Computação 2026" e "Semana da Computação 2027" são eventos diferentes.
+Q5: Vagas: inscrição no evento é geral; determinadas sessões podem exigir inscrição adicional e possuir limite próprio.
+Q6: Alteração de programação: armazenamos apenas a programação atual. Histórico de alterações não será mantido. "
 Cada resposta Q1-Q6 deverá ocupar uma única linha.
 ============================================================
 3. DDL COMPLETO
 ============================================================
+-- ============================================================
+-- 1. TIPOS AUXILIARES
+-- ============================================================
+
+CREATE TYPE status_evento AS ENUM (
+    'PLANEJADO',
+    'ABERTO',
+    'EM_ANDAMENTO',
+    'ENCERRADO',
+    'CANCELADO'
+);
+
+CREATE TYPE status_inscricao AS ENUM (
+    'CONFIRMADA',
+    'LISTA_ESPERA',
+    'CANCELADA'
+);
+
+CREATE TYPE papel_evento AS ENUM (
+    'ORGANIZADOR',
+    'COLABORADOR'
+);
+
+CREATE TYPE papel_atividade AS ENUM (
+    'PALESTRANTE',
+    'INSTRUTOR',
+    'MEDIADOR',
+    'ORGANIZADOR'
+);
+
+
 -- ============================================================
 -- 2. PESSOAS
 -- ============================================================
@@ -404,6 +439,272 @@ CREATE TABLE inscricao_sessao (
         ON DELETE RESTRICT
         ON UPDATE CASCADE
 );
+
+
+-- ============================================================
+-- 16. FUNÇÃO:
+--    VERIFICAR SE A SESSÃO ESTÁ DENTRO DO EVENTO
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_verificar_sessao_evento()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_inicio DATE;
+    v_fim DATE;
+BEGIN
+
+    SELECT e.data_inicio, e.data_fim
+    INTO v_inicio, v_fim
+    FROM atividade a
+    JOIN evento e
+        ON e.id_evento = a.id_evento
+    WHERE a.id_atividade = NEW.id_atividade;
+
+    IF NEW.data_inicio::DATE < v_inicio
+       OR NEW.data_fim::DATE > v_fim THEN
+
+        RAISE EXCEPTION
+            'A sessão deve ocorrer dentro do período do evento.';
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+CREATE TRIGGER trg_verificar_sessao_evento
+BEFORE INSERT OR UPDATE
+ON sessao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verificar_sessao_evento();
+
+
+-- ============================================================
+-- 17. FUNÇÃO:
+--    VERIFICAR CAPACIDADE DO ESPAÇO
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_verificar_capacidade_sessao()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_capacidade INTEGER;
+BEGIN
+
+    SELECT capacidade
+    INTO v_capacidade
+    FROM espaco
+    WHERE id_espaco = NEW.id_espaco;
+
+    IF NEW.limite_vagas IS NOT NULL
+       AND NEW.limite_vagas > v_capacidade THEN
+
+        RAISE EXCEPTION
+            'O limite de vagas da sessão (%) excede a capacidade do espaço (%).',
+            NEW.limite_vagas,
+            v_capacidade;
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+CREATE TRIGGER trg_verificar_capacidade_sessao
+BEFORE INSERT OR UPDATE
+ON sessao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verificar_capacidade_sessao();
+
+
+-- ============================================================
+-- 18. FUNÇÃO:
+--    IMPEDIR CONFLITO DE ESPAÇOS
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_verificar_conflito_espaco()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+
+    IF EXISTS (
+        SELECT 1
+        FROM sessao s
+        WHERE s.id_espaco = NEW.id_espaco
+          AND s.id_sessao <> COALESCE(NEW.id_sessao, -1)
+
+          AND NEW.data_inicio < s.data_fim
+          AND NEW.data_fim > s.data_inicio
+    ) THEN
+
+        RAISE EXCEPTION
+            'O espaço selecionado já está ocupado no período informado.';
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+CREATE TRIGGER trg_verificar_conflito_espaco
+BEFORE INSERT OR UPDATE
+ON sessao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verificar_conflito_espaco();
+
+
+-- ============================================================
+-- 19. FUNÇÃO:
+--    VERIFICAR RECURSOS NECESSÁRIOS
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_verificar_recursos_sessao()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+
+    IF EXISTS (
+        SELECT 1
+        FROM atividade_recurso ar
+        WHERE ar.id_atividade = NEW.id_atividade
+            AND NOT EXISTS (
+                SELECT 1
+                FROM espaco_recurso er
+                WHERE er.id_espaco = NEW.id_espaco
+                AND er.id_recurso = ar.id_recurso
+                AND er.quantidade >= ar.quantidade
+            )
+    ) THEN
+
+        RAISE EXCEPTION
+            'O espaço selecionado não possui todos os recursos necessários para a atividade.';
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+CREATE TRIGGER trg_verificar_recursos_sessao
+BEFORE INSERT OR UPDATE
+ON sessao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verificar_recursos_sessao();
+
+
+-- ============================================================
+-- 20. FUNÇÃO:
+--    GARANTIR QUE INSCRIÇÃO EM SESSÃO EXIJA INSCRIÇÃO NO EVENTO
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_verificar_inscricao_sessao()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_evento BIGINT;
+    v_requer_inscricao BOOLEAN;
+BEGIN
+
+    SELECT a.id_evento, s.requer_inscricao
+    INTO v_evento, v_requer_inscricao
+    FROM sessao s
+    JOIN atividade a
+        ON a.id_atividade = s.id_atividade
+    WHERE s.id_sessao = NEW.id_sessao;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM inscricao_evento ie
+        WHERE ie.id_evento = v_evento
+          AND ie.id_pessoa = NEW.id_pessoa
+          AND ie.status = 'CONFIRMADA'
+    ) THEN
+
+        RAISE EXCEPTION
+            'A pessoa precisa estar inscrita no evento para se inscrever na sessão.';
+
+    END IF;
+
+    IF NOT v_requer_inscricao THEN
+
+        RAISE EXCEPTION
+            'Esta sessão não exige inscrição específica.';
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+CREATE TRIGGER trg_verificar_inscricao_sessao
+BEFORE INSERT OR UPDATE
+ON inscricao_sessao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verificar_inscricao_sessao();
+
+
+-- ============================================================
+-- 21. FUNÇÃO:
+--    CONTROLAR LIMITE DE VAGAS DA SESSÃO
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION fn_verificar_vagas_sessao()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_limite INTEGER;
+    v_confirmadas INTEGER;
+BEGIN
+
+    IF NEW.status <> 'CONFIRMADA' THEN
+        RETURN NEW;
+    END IF;
+
+    SELECT COALESCE(s.limite_vagas, e.capacidade)
+    INTO v_limite
+    FROM sessao s
+    JOIN espaco e ON s.id_espaco = e.id_espaco
+    WHERE s.id_sessao = NEW.id_sessao;
+
+    SELECT COUNT(*)
+    INTO v_confirmadas
+    FROM inscricao_sessao
+    WHERE id_sessao = NEW.id_sessao
+      AND status = 'CONFIRMADA'
+      AND NOT (
+          id_pessoa = NEW.id_pessoa
+      );
+
+    IF v_confirmadas >= v_limite THEN
+
+        RAISE EXCEPTION
+            'Não há vagas disponíveis para esta sessão.';
+
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+CREATE TRIGGER trg_verificar_vagas_sessao
+BEFORE INSERT OR UPDATE
+ON inscricao_sessao
+FOR EACH ROW
+EXECUTE FUNCTION fn_verificar_vagas_sessao();
+
 ============================================================
 4. CONSULTAS
 ============================================================

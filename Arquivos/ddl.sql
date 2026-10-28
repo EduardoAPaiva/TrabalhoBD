@@ -584,19 +584,14 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM atividade_recurso ar
-        WHERE ar.id_atividade = (
-            SELECT a.id_atividade
-            FROM atividade a
-            WHERE a.id_atividade = NEW.id_atividade
-        )
-
-        AND NOT EXISTS (
-            SELECT 1
-            FROM espaco_recurso er
-            WHERE er.id_espaco = NEW.id_espaco
-              AND er.id_recurso = ar.id_recurso
-              AND er.quantidade >= ar.quantidade
-        )
+        WHERE ar.id_atividade = NEW.id_atividade
+            AND NOT EXISTS (
+                SELECT 1
+                FROM espaco_recurso er
+                WHERE er.id_espaco = NEW.id_espaco
+                AND er.id_recurso = ar.id_recurso
+                AND er.quantidade >= ar.quantidade
+            )
     ) THEN
 
         RAISE EXCEPTION
@@ -687,14 +682,11 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    SELECT limite_vagas
+    SELECT COALESCE(s.limite_vagas, e.capacidade)
     INTO v_limite
-    FROM sessao
-    WHERE id_sessao = NEW.id_sessao;
-
-    IF v_limite IS NULL THEN
-        RETURN NEW;
-    END IF;
+    FROM sessao s
+    JOIN espaco e ON s.id_espaco = e.id_espaco
+    WHERE s.id_sessao = NEW.id_sessao;
 
     SELECT COUNT(*)
     INTO v_confirmadas
@@ -723,28 +715,3 @@ ON inscricao_sessao
 FOR EACH ROW
 EXECUTE FUNCTION fn_verificar_vagas_sessao();
 
-
--- ============================================================
--- 22. ÍNDICES AUXILIARES
--- ============================================================
-
-CREATE INDEX idx_atividade_evento
-    ON atividade(id_evento);
-
-CREATE INDEX idx_sessao_atividade
-    ON sessao(id_atividade);
-
-CREATE INDEX idx_sessao_espaco
-    ON sessao(id_espaco);
-
-CREATE INDEX idx_sessao_periodo
-    ON sessao(data_inicio, data_fim);
-
-CREATE INDEX idx_inscricao_evento_pessoa
-    ON inscricao_evento(id_pessoa);
-
-CREATE INDEX idx_inscricao_sessao_pessoa
-    ON inscricao_sessao(id_pessoa);
-
-CREATE INDEX idx_evento_status
-    ON evento(status);
