@@ -1,10 +1,10 @@
 {
   "database": {
-    "host": "localhost",
+    "host": "aws-0-us-east-1.pooler.supabase.com",
     "port": 5432,
-    "dbname": "trabalho_bd",
-    "user": "postgres",
-    "password": "admin"
+    "dbname": "postgres",
+    "user": "postgres.drgcarmjgjpdqxbkcbga",
+    "password": "n6OCVb4vhPTlkXHW"
   },
   "ollama": {
     "host": "http://localhost:11434",

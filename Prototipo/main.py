@@ -203,6 +203,71 @@ def main():
     print("\nBanco de dados conectado.")
     print(f"Modelo Ollama: {ollama_config['model']}")
 
+    print()
+    print("=" * 80)
+    print("CONSULTA 1")
+    print("=" * 80)
+    executar_sql("""SELECT 
+            a.titulo AS nome_atividade,
+            ar.id_recurso,
+            r.nome AS nome_recurso,
+            ar.quantidade
+        FROM 
+            atividade a
+        JOIN 
+            atividade_recurso ar ON a.id_atividade = ar.id_atividade
+        JOIN 
+            recurso r ON ar.id_recurso = r.id_recurso;""")
+
+    print()
+    print("=" * 80)
+    print("CONSULTA 2")
+    print("=" * 80)
+    executar_sql("""SELECT p.nome, e.nome AS evento
+            FROM pessoa p
+            JOIN evento_pessoa ep ON p.id_pessoa = ep.id_pessoa
+            JOIN evento e ON ep.id_evento = e.id_evento
+            WHERE e.status = 'ABERTO';""")
+
+    print()
+    print("=" * 80)
+    print("CONSULTA 3")
+    print("=" * 80)
+    executar_sql("""SELECT p.nome, e.nome 
+                FROM evento_pessoa_responsavel epr 
+                JOIN pessoa p ON epr.id_pessoa = p.id_pessoa 
+                JOIN evento e ON epr.id_evento = e.id_evento;""")
+
+    print()
+    print("=" * 80)
+    print("CONSULTA 4")
+    print("=" * 80)
+    executar_sql("""SELECT p.nome AS nome_pessoa, e.nome AS nome_evento, COUNT(a.id_atividade) AS quantidade_atividades
+                FROM pessoa p
+                JOIN inscricao_evento ie ON p.id_pessoa = ie.id_pessoa
+                JOIN evento e ON ie.id_evento = e.id_evento
+                JOIN atividade a ON e.id_evento = a.id_evento
+                WHERE ie.status = 'LISTA_ESPERA'
+                GROUP BY p.nome, e.nome
+                HAVING COUNT(a.id_atividade) > 2;""")
+
+    print()
+    print("=" * 80)
+    print("CONSULTA 4")
+    print("=" * 80)
+    executar_sql("""SELECT 
+                    s.id_sessao,
+                    s.limite_vagas,
+                    COUNT(i.id_pessoa) AS inscritos
+                FROM 
+                    sessao s
+                LEFT JOIN 
+                    inscricao_sessao i ON s.id_sessao = i.id_sessao AND i.status = 'CONFIRMADA'
+                WHERE 
+                    s.limite_vagas IS NOT NULL
+                GROUP BY 
+                    s.id_sessao, s.limite_vagas;""")
+
     while True:
 
         print("\nDigite sua pergunta sobre o banco de dados.")
