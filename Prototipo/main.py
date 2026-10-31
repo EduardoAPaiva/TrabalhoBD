@@ -253,7 +253,7 @@ def main():
 
     print()
     print("=" * 80)
-    print("CONSULTA 4")
+    print("CONSULTA 5")
     print("=" * 80)
     executar_sql("""SELECT 
                     s.id_sessao,

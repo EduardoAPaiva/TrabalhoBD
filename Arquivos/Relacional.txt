@@ -1,0 +1,130 @@
+%% SCC0640 - Sistema de Gestao de Eventos e Espacos
+%% Modelo RELACIONAL (Crow's Foot) - PostgreSQL
+%% Tabelas associativas preservadas; atributos secundarios omitidos para legibilidade.
+%% Linhas cheias: FK identificadora (integra PK da tabela filha).
+%% Linhas tracejadas: FK nao-identificadora.
+%% || = 1 obrigatorio | o{ = 0..N
+erDiagram
+    direction LR
+
+    evento {
+        bigint id_evento PK
+        varchar nome
+        date data_inicio
+        date data_fim
+        status_evento status
+    }
+
+    atividade {
+        bigint id_atividade PK
+        bigint id_evento FK
+        varchar titulo
+    }
+
+    sessao {
+        bigint id_sessao PK
+        bigint id_atividade FK
+        bigint id_espaco FK
+        timestamp data_inicio
+        timestamp data_fim
+        boolean requer_inscricao
+        integer limite_vagas
+    }
+
+    pessoa {
+        bigint id_pessoa PK
+        varchar nome
+        varchar email UK
+    }
+
+    organizacao {
+        bigint id_organizacao PK
+        varchar nome UK
+    }
+
+    espaco {
+        bigint id_espaco PK
+        varchar nome UK
+        varchar localizacao
+        integer capacidade
+    }
+
+    recurso {
+        bigint id_recurso PK
+        varchar nome UK
+    }
+
+    evento_pessoa_responsavel {
+        bigint id_evento PK, FK
+        bigint id_pessoa PK, FK
+    }
+
+    evento_organizacao_responsavel {
+        bigint id_evento PK, FK
+        bigint id_organizacao PK, FK
+    }
+
+    evento_pessoa {
+        bigint id_evento PK, FK
+        bigint id_pessoa PK, FK
+        papel_evento papel PK
+    }
+
+    atividade_pessoa {
+        bigint id_atividade PK, FK
+        bigint id_pessoa PK, FK
+        papel_atividade papel PK
+    }
+
+    inscricao_evento {
+        bigint id_evento PK, FK
+        bigint id_pessoa PK, FK
+        timestamp data_inscricao
+        status_inscricao status
+    }
+
+    inscricao_sessao {
+        bigint id_sessao PK, FK
+        bigint id_pessoa PK, FK
+        timestamp data_inscricao
+        status_inscricao status
+    }
+
+    espaco_recurso {
+        bigint id_espaco PK, FK
+        bigint id_recurso PK, FK
+        integer quantidade
+    }
+
+    atividade_recurso {
+        bigint id_atividade PK, FK
+        bigint id_recurso PK, FK
+        integer quantidade
+    }
+
+    %% Estrutura e agenda
+    evento ||..o{ atividade : possui
+    atividade ||..o{ sessao : possui
+    espaco ||..o{ sessao : recebe
+
+    %% Promocao e equipe
+    evento ||--o{ evento_pessoa_responsavel : tem_responsavel
+    pessoa ||--o{ evento_pessoa_responsavel : promove
+    evento ||--o{ evento_organizacao_responsavel : tem_organizacao
+    organizacao ||--o{ evento_organizacao_responsavel : promove
+    evento ||--o{ evento_pessoa : tem_equipe
+    pessoa ||--o{ evento_pessoa : assume_papel
+    atividade ||--o{ atividade_pessoa : tem_equipe
+    pessoa ||--o{ atividade_pessoa : assume_papel
+
+    %% Inscricoes
+    evento ||--o{ inscricao_evento : recebe_inscricoes
+    pessoa ||--o{ inscricao_evento : inscreve_se
+    sessao ||--o{ inscricao_sessao : recebe_inscricoes
+    pessoa ||--o{ inscricao_sessao : inscreve_se
+
+    %% Infraestrutura e recursos
+    espaco ||--o{ espaco_recurso : oferece
+    recurso ||--o{ espaco_recurso : disponivel_em
+    atividade ||--o{ atividade_recurso : requer
+    recurso ||--o{ atividade_recurso : necessario_para

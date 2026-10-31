@@ -1,0 +1,39 @@
+============================================================
+Nome dos Integrantes:
+
+Caio Cesar Trentin de Assis - 15674233
+Eduardo Alves Paiva - 15448481
+João Pedro Biazus Fagá - 15483280
+Mariana do Nascimento Ferreira - 15582241
+
+============================================================
+Requisitos de Software:
+
+Necessário possuir Python e PostgreSQL. Instalar as dependências com o seguinte comando:
+python -m pip install -r requirements.txt
+Além disso, necessário possuir algum modelo do Ollama, e selecionar o modelo em "config.json"
+
+============================================================
+Criação da Base:
+
+Para a criação da base, é possível extrair o DDL do arquivo "Projeto.txt".
+Caso seja mais simples, todo o DDL também se encontra em "DDL.sql".
+OBS: o arquivo "DDL.sql" possui os comandos de DROP TABLE se necessário, que não se encontram em "Projeto.txt"
+
+============================================================
+Execução do DML:
+
+Executar o arquivo "DML.sql". Ele possui, no inicio do arquivo, os comando de DELETE para limpar todas as tabelas, caso possuam algum elemento pré-existente.
+
+============================================================
+Execução do Protótipo:
+
+Após extrair o arquivo "Prototipo.zip", modificar o arquivo "config.json" para configurar o PostgreSQL e o modelo do Ollama.
+Além disso, o arquivo "Projeto.txt" precisa estar na pasta raiz (anterior à pasta /Prototipo) para que o arquivo python consiga obter o DDL para o modelo do Ollama.
+
+============================================================
+Modelo do Ollama:
+
+O modelo do ollama utilizado nos testes foi o "qwen2.5-coder:latest", podendo ser alterado para um modelo de escolha do avaliador alterando o arquivo "config.json"
+
+============================================================
